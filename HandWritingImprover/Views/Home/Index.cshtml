@@ -1,0 +1,607 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US">
+
+
+
+<head>
+
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="SemiColonWeb" />
+
+    <!-- Stylesheets
+    ============================================= -->
+    <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700|Roboto:300,400,700" rel="stylesheet" type="text/css"/>
+    <link href='http://fonts.googleapis.com/css?family=Shadows+Into+Light|Architects+Daughter|Kaushan+Script|Coming+Soon|Kalam|Yellowtail' rel='stylesheet' type='text/css'>
+
+    <link href="~/Content/css/bootstrap.css" rel="stylesheet" />
+    <link href="~/Content/style.css" rel="stylesheet" />
+
+    <!-- One Page Module Specific Stylesheet -->    
+    <link href="~/Content/onepage-css/onepage.css" rel="stylesheet" />
+    <!-- / -->
+
+
+    <link href="~/Content/css/font-icons.css" rel="stylesheet" />
+    <link href="~/Content/css/dark.css" rel="stylesheet" />
+    
+    
+    <link href="~/Content/onepage-css/et-line.css" rel="stylesheet" />
+    <link href="~/Content/css/animate.css" rel="stylesheet" />
+
+    <link href="~/Content/css/fonts.css" rel="stylesheet" />
+    <link href="~/Content/css/responsive.css" rel="stylesheet" />
+
+<script type="text/javascript" src="http://will-doc.azurewebsites.net/web/scripts/js.ext.js"></script>
+
+
+
+    <script src="~/Content/js/jquery.js"></script>
+    <script src="~/Content/js/plugins.js"></script>
+
+<script src="~/scripts/engine/Module.js"></script>
+    <script src="~/scripts/engine/WacomInkEngine.js"></script>
+
+
+    <script>
+        var WILL = {
+            backgroundColor: Module.Color.WHITE,
+            color: Module.Color.from(0, 0, 0),
+
+            strokes: new Array(),
+
+            init: function (width, height) {                
+                this.initInkEngine(width, height);
+                this.initEvents();
+            },
+
+            initInkEngine: function (width, height) {
+                this.canvas = new Module.InkCanvas(document.getElementById("canvas"), width, height);
+                this.strokesLayer = this.canvas.createLayer();
+
+                this.clear();
+
+                this.brush = new Module.SolidColorBrush();
+
+                this.pathBuilder = new Module.SpeedPathBuilder();
+
+
+
+                this.pathBuilder.setNormalizationConfig(5, 210);
+                this.pathBuilder.setPropertyConfig(Module.PropertyName.Width, 5, 3.2, NaN, NaN, Module.PropertyFunction.Sigmoid, 0.6, true);
+
+                this.smoothener = new Module.MultiChannelSmoothener(this.pathBuilder.stride);
+
+                this.strokeRenderer = new Module.StrokeRenderer(this.canvas);
+                this.strokeRenderer.configure({ brush: this.brush, color: this.color });
+            },
+
+            initEvents: function () {
+                var self = this;
+                $(Module.canvas).on("mousedown", function (e) { self.beginStroke(e); });
+                $(Module.canvas).on("mousemove", function (e) { self.moveStroke(e); });
+                $(document).on("mouseup", function (e) { self.endStroke(e); });
+            },
+
+            beginStroke: function (e) {
+                if (e.button != 0) return;
+
+                this.inputPhase = Module.InputPhase.Begin;
+
+                this.buildPath({ x: e.clientX - $('#canvas').offset().left, y: e.clientY - $('#canvas').offset().top });
+                this.drawPath();
+                
+            },
+
+            moveStroke: function (e) {
+                if (!this.inputPhase) return;
+
+                this.inputPhase = Module.InputPhase.Move;
+                this.pointerPos = { x: e.clientX - $('#canvas').offset().left, y: e.clientY - $('#canvas').offset().top };
+
+                if (WILL.frameID != WILL.canvas.frameID) {
+                    var self = this;
+
+                    WILL.frameID = WILL.canvas.requestAnimationFrame(function () {
+                        if (self.inputPhase && self.inputPhase == Module.InputPhase.Move) {
+                            self.buildPath(self.pointerPos);
+                            self.drawPath();
+                        }
+                    }, true);
+                }
+            },
+
+            endStroke: function (e) {
+                if (!this.inputPhase) return;
+
+                this.inputPhase = Module.InputPhase.End;
+
+                this.buildPath({ x: e.clientX - $('#canvas').offset().left, y: e.clientY - $('#canvas').offset().top });
+                this.drawPath();
+
+                var stroke = new Module.Stroke(this.brush, this.path, NaN, this.color, 0, 1);
+                this.strokes.push(stroke);
+
+                delete this.inputPhase;
+            },
+
+            buildPath: function (pos) {
+                if (this.inputPhase == Module.InputPhase.Begin)
+                    this.smoothener.reset();
+
+                var pathPart = this.pathBuilder.addPoint(this.inputPhase, pos, Date.now() / 1000);
+                var smoothedPathPart = this.smoothener.smooth(pathPart, this.inputPhase == Module.InputPhase.End);
+                var pathContext = this.pathBuilder.addPathPart(smoothedPathPart);
+
+                this.pathPart = pathContext.getPathPart();
+                this.path = pathContext.getPath();
+
+                if (this.inputPhase == Module.InputPhase.Move) {
+                    var preliminaryPathPart = this.pathBuilder.createPreliminaryPath();
+                    var preliminarySmoothedPathPart = this.smoothener.smooth(preliminaryPathPart, true);
+
+                    this.preliminaryPathPart = this.pathBuilder.finishPreliminaryPath(preliminarySmoothedPathPart);
+                }
+            },
+
+            drawPath: function () {
+                if (this.inputPhase == Module.InputPhase.Begin) {
+                    this.strokeRenderer.draw(this.pathPart, false);
+                    this.strokeRenderer.blendUpdatedArea();
+                }
+                else if (this.inputPhase == Module.InputPhase.Move) {
+                    this.strokeRenderer.draw(this.pathPart, false);
+                    this.strokeRenderer.drawPreliminary(this.preliminaryPathPart);
+
+                    this.canvas.clear(this.strokeRenderer.updatedArea, this.backgroundColor);
+                    this.canvas.blend(this.strokesLayer, { rect: this.strokeRenderer.updatedArea });
+
+                    this.strokeRenderer.blendUpdatedArea();
+                }
+                else if (this.inputPhase == Module.InputPhase.End) {
+                    this.strokeRenderer.draw(this.pathPart, true);
+                    this.strokeRenderer.blendStroke(this.strokesLayer, Module.BlendMode.NORMAL);
+
+                    this.canvas.clear(this.strokeRenderer.strokeBounds, this.backgroundColor);
+                    this.canvas.blend(this.strokesLayer, { rect: this.strokeRenderer.strokeBounds });
+                }
+            },
+
+            redraw: function (dirtyArea) {
+                if (!dirtyArea) dirtyArea = this.canvas.bounds;
+                dirtyArea = Module.RectTools.ceil(dirtyArea);
+
+                this.strokesLayer.clear(dirtyArea);
+
+                this.strokes.forEach(function (stroke) {
+                    var affectedArea = Module.RectTools.intersect(stroke.bounds, dirtyArea);
+
+                    if (affectedArea) {
+                        this.strokeRenderer.draw(stroke);
+                        this.strokeRenderer.blendStroke(this.strokesLayer, stroke.blendMode);
+                    }
+                }, this);
+
+                this.refresh(dirtyArea);
+            },
+
+            refresh: function (dirtyArea) {
+                this.canvas.blend(this.strokesLayer, { rect: Module.RectTools.ceil(dirtyArea) });
+            },
+
+            clear: function () {
+                this.strokes = new Array();
+
+                this.strokesLayer.clear(this.backgroundColor);
+                this.canvas.clear(this.backgroundColor);
+            },
+
+            load: function (e) {
+                var input = e.currentTarget;
+                var file = input.files[0];
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    WILL.clear();
+
+                    var strokes = Module.InkDecoder.decode(new Uint8Array(e.target.result));
+                    WILL.strokes.pushArray(strokes);
+                    WILL.redraw(strokes.bounds);
+                };
+
+                reader.readAsArrayBuffer(file);
+            },
+
+            save: function () {
+                var data = Module.InkEncoder.encode(this.strokes);
+                saveAs(data, "export.data", "application/octet-stream");
+            }
+        };
+
+        Module.addPostScript(function () {            
+            Module.InkDecoder.getStrokeBrush = function (paint) {
+                return WILL.brush;
+            }
+
+            WILL.init(1486, 1370);
+        });
+    </script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--[if lt IE 9]>
+        <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <!-- Document Title
+    ============================================= -->
+    <title>One Page with Common Height Content Sections | Canvas</title>
+
+    <style>
+        #content {
+    position: relative;
+    overflow: hidden;
+    background-color: #FFF;
+    margin-top: 10px;
+    border-top: 1px solid black;
+}
+    </style>
+
+</head>
+
+
+
+<body class="stretched side-push-panel">
+
+    <div class="body-overlay"></div>
+
+    @*<div id="side-panel" class="dark">
+
+        <div id="side-panel-trigger-close" class="side-panel-trigger"><a href="#"><i class="icon-line-cross"></i></a></div>
+
+        <div class="side-panel-wrap">
+
+            <div class="widget widget_links clearfix">
+
+                <h4>About Canvas</h4>
+
+                <div style="font-size: 14px; line-height: 1.7;">
+                    <address style="line-height: 1.7;">
+                        795 Folsom Ave, Suite 600<br>
+                        San Francisco, CA 94107<br>
+                    </address>
+
+                    <div class="clear topmargin-sm"></div>
+
+                    <abbr title="Phone Number">Phone:</abbr> (91) 8547 632521<br>
+                    <abbr title="Fax">Fax:</abbr> (91) 11 41370 1433<br>
+                    <abbr title="Email Address">Email:</abbr> info@canvas.com
+                </div>
+
+            </div>
+
+            <div class="widget quick-contact-widget clearfix">
+
+                <h4>Connect Socially</h4>
+
+                <a href="#" class="social-icon si-small si-colored si-facebook" title="Facebook">
+                    <i class="icon-facebook"></i>
+                    <i class="icon-facebook"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-twitter" title="Twitter">
+                    <i class="icon-twitter"></i>
+                    <i class="icon-twitter"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-github" title="Github">
+                    <i class="icon-github"></i>
+                    <i class="icon-github"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-pinterest" title="Pinterest">
+                    <i class="icon-pinterest"></i>
+                    <i class="icon-pinterest"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-forrst" title="Forrst">
+                    <i class="icon-forrst"></i>
+                    <i class="icon-forrst"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-linkedin" title="LinkedIn">
+                    <i class="icon-linkedin"></i>
+                    <i class="icon-linkedin"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-gplus" title="Google Plus">
+                    <i class="icon-gplus"></i>
+                    <i class="icon-gplus"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-instagram" title="Instagram">
+                    <i class="icon-instagram"></i>
+                    <i class="icon-instagram"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-flickr" title="Flickr">
+                    <i class="icon-flickr"></i>
+                    <i class="icon-flickr"></i>
+                </a>
+                <a href="#" class="social-icon si-small si-colored si-skype" title="Skype">
+                    <i class="icon-skype"></i>
+                    <i class="icon-skype"></i>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>*@
+
+    <!-- Document Wrapper
+    ============================================= -->
+<div id="wrapper" class="clearfix">
+   
+    <!-- Slider
+    ============================================= -->
+    <section id="slider" class="slider-parallax full-screen">
+
+        <div class="slider-parallax-inner">
+
+            <div class="col-md-5 col-sm-6 full-screen" style="background-color: #F5F5F5;">
+                <div class="" data-loader="button">
+                    <div class="col-padding">
+
+                        <div class="heading-block nobottomborder bottommargin-sm">
+                            <h1 style="line-height: 1.4; font-size: 24px;">Try a Sample: </h1>
+                            <a class="button" href="#" onclick="GetPhrase('Easy');">Easy</a> | <a class="button" href="#" onclick="GetPhrase('Medium');">Medium</a> | <a class="button" href="#" onclick="GetPhrase('Hard');">Hard</a>
+                        </div>
+
+                        <div class="heading-block nobottomborder bottommargin-sm">
+                            <h1 style="line-height: 1.4; font-size: 24px;">Pick a Style: </h1>
+                            <input type="radio" name="fontStyle" id="fontStyle1" checked="checked" data-info="Shadows Into Light"/> <label for="fontStyle1"style="font-family: 'Shadows Into Light'">Sample Handwriting Style</label><br/>
+
+                            <input type="radio" name="fontStyle" id="fontStyle2" data-info="Architects Daughter"/> <label for="fontStyle2" style="font-family: 'Architects Daughter'">Sample Handwriting Style</label><br/>
+
+                            <input type="radio" name="fontStyle" id="fontStyle3" data-info="Kaushan Script"/> <label for="fontStyle3" style="font-family: 'Kaushan Script'">Sample Handwriting Style</label><br/>
+
+                            <input type="radio" name="fontStyle" id="fontStyle4" data-info="Coming Soon"/> <label for="fontStyle4"style="font-family: 'Coming Soon'">Sample Handwriting Style</label><br/>
+
+                            <input type="radio" name="fontStyle" id="fontStyle5" data-info="Kalam"/> <label for="fontStyle5"style="font-family: 'Kalam'">Sample Handwriting Style</label><br/>
+                            <input type="radio" name="fontStyle" id="fontStyle6" data-info="Yellowtail" /> <label for="fontStyle6" style="font-family: 'Yellowtail'">Sample Handwriting Style</label><br />
+                        </div>
+
+                        <div class="widget-subscribe-form-result"></div>
+                        <button class="button button-dark button-3d button-rounded" value="submit" onclick="verifyResult()" style="width: 66%"><i class="icon-cloud"></i> How did I do ?</button>
+                        <a href="#" class="button" onclick="clearStrokes();">Clear Canvas</a>
+
+
+                    </div>
+                </div>
+
+
+                <div class="result" style="display: none">
+                    <label>Quality Score</label>
+                    <label id="score" style="font-size:300px"></label><br/>
+                </div>
+
+            </div>
+
+            <div class="col-md-7 col-sm-6 full-screen center nopadding" style="background: url('images/page/main.jpg') center center no-repeat; background-size: cover;">
+
+                <div style="position: relative;">
+                    <canvas id="hintLayer" width="1486" height="1370"
+                            style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+                    <canvas id="canvas" width="1486" height="1370"
+                            style="position: absolute; opacity: 0.7; left: 0; top: 0; z-index: 1;"></canvas>
+                </div>
+
+               
+            </div>
+
+
+
+        </div>
+
+    </section><!-- #slider end -->
+
+    <section id="content">
+
+        <div id="settings" style="display:none">
+            <h1>Diff</h1>
+            <label><input type="radio" name="diff_type" value="diffChars" checked> Chars</label>
+            <label><input type="radio" name="diff_type" value="diffWords"> Words</label>
+            <label><input type="radio" name="diff_type" value="diffLines"> Lines</label>
+        </div>
+
+        
+        <table>
+            <tr>
+                <td contenteditable="true" id="a"></td>
+                <td contenteditable="true" id="b"></td>
+                <td><pre id="result"></pre></td>
+            </tr>
+        </table>
+
+        <link rel="stylesheet" href="http://kpdecker.github.io/jsdiff/style.css" />
+        <script src="http://kpdecker.github.io/jsdiff/diff.js"></script>
+        <script defer>
+            var a = document.getElementById('a');
+            var b = document.getElementById('b');
+            var result = document.getElementById('result');
+
+            function changed() {
+                var diff = JsDiff[window.diffType](a.textContent, b.textContent);
+                var fragment = document.createDocumentFragment();
+                for (var i = 0; i < diff.length; i++) {
+
+                    if (diff[i].added && diff[i + 1] && diff[i + 1].removed) {
+                        var swap = diff[i];
+                        diff[i] = diff[i + 1];
+                        diff[i + 1] = swap;
+                    }
+
+                    var node;
+                    if (diff[i].removed) {
+                        node = document.createElement('del');
+                        node.appendChild(document.createTextNode(diff[i].value));
+                    } else if (diff[i].added) {
+                        node = document.createElement('ins');
+                        node.appendChild(document.createTextNode(diff[i].value));
+                    } else {
+                        node = document.createTextNode(diff[i].value);
+                    }
+                    fragment.appendChild(node);
+                }
+
+                result.textContent = '';
+                result.appendChild(fragment);
+            }
+
+            window.onload = function() {
+                onDiffTypeChange(document.querySelector('#settings [name="diff_type"]:checked'));
+                changed();
+            };
+
+            a.onpaste = a.onchange =
+                b.onpaste = b.onchange = changed;
+
+            if ('oninput' in a) {
+                a.oninput = b.oninput = changed;
+            } else {
+                a.onkeyup = b.onkeyup = changed;
+            }
+
+            function onDiffTypeChange(radio) {
+                window.diffType = radio.value;
+                document.title = "Diff " + radio.value.slice(4);
+            }
+
+            var radio = document.getElementsByName('diff_type');
+            for (var i = 0; i < radio.length; i++) {
+                radio[i].onchange = function(e) {
+                    onDiffTypeChange(e.target);
+                    changed();
+                }
+            }
+        </script>
+    </section>
+</div>
+        <!-- Go To Top
+    ============================================= -->
+    <div id="gotoTop" class="icon-angle-up" style="font-family:Kalam"></div>
+
+    <!-- External JavaScripts
+    ============================================= -->
+
+    
+
+    <!-- Footer Scripts
+    ============================================= -->
+
+<script src="~/Content/js/functions.js"></script>
+
+<script>
+    function writeTextToCanvas(context, text, x, y, maxWidth, lineHeight) {
+        var words = text.split(' ');
+        var line = '';
+
+        for (var n = 0; n < words.length; n++) {
+            var testLine = line + words[n] + ' ';
+            var metrics = context.measureText(testLine);
+            var testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                context.fillText(line, x + 10, y + 40);
+                line = words[n] + ' ';
+                y += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        context.fillText(line, x + 10, y + 40);
+    }
+
+    function convertWillStrokesToMyScriptStrokes(willStrokes) {
+        var myScriptStrokes = [];
+
+        for (var i = 0; i < willStrokes.length; i++) {
+            var myScriptStroke = {};
+            var xPoints = [];
+            var yPoints = [];
+
+            for (var p = 0; p < willStrokes[i].path.points.length; p += willStrokes[i].path.stride) {
+                xPoints.push(willStrokes[i].path.points[p]);
+                yPoints.push(willStrokes[i].path.points[p + 1]);
+            }
+
+            myScriptStroke.type = "stroke";
+            myScriptStroke.x = xPoints;
+            myScriptStroke.y = yPoints;
+
+            myScriptStrokes.push(myScriptStroke);
+        }
+
+        return myScriptStrokes;
+    }
+
+    function GetPhrase(difficulty) {
+        $.ajax("/Home/GetPhrase?difficulty=" + difficulty, {
+            contentType: "application/json; charset=utf-8",
+            success: function(r) {
+                var canvas = document.getElementById("hintLayer");
+                var context = canvas.getContext("2d");
+
+                context.clearCanvas();
+                clearStrokes();
+
+                var maxWidth = 1486 - 25;
+                var lineHeight = 85;
+                var x = (canvas.width - maxWidth) / 2;
+                var y = 60;
+                var text = JSON.parse(r).Text;
+
+                $("#a").text(text);
+
+                window.currentPhrase = JSON.parse(r);
+
+                context.font = "65pt '" + $("input[name='fontStyle']:checked").data("info") + "'";
+                context.fillStyle = '#000';
+
+                window.writeTextToCanvas(context, text, x, y, maxWidth, lineHeight);
+            }
+        });
+    }
+
+    function verifyResult() {
+        $.post("/home/HandwritingResult", { jsonData: JSON.stringify(convertWillStrokesToMyScriptStrokes(WILL.strokes)) },
+            function(r) {
+                var data = JSON.parse(r);
+                var matchedData = data.result.textSegmentResult.candidates[0];
+
+                $(".result").show();
+                $("#score").text((matchedData.resemblanceScore * 100).toFixed(2) + "%");                
+                $("#b").text(matchedData.label);
+                window.changed();
+                window.scrollTo(0, document.body.scrollHeight);
+
+            });
+    }
+
+
+    function clearStrokes() {
+        WILL.clear();
+    }
+
+
+</script>
+
+    <style>
+        [contentEditable] {
+            font-size: 30px;
+        }
+
+        pre {
+            white-space: pre-wrap; 
+            white-space: -moz-pre-wrap;
+            white-space: -pre-wrap; 
+            white-space: -o-pre-wrap;
+            word-wrap: break-word; 
+            font-size: 30px;
+        }
+    </style>
+</body>
+
+</html>
