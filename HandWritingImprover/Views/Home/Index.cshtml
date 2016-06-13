@@ -14,7 +14,8 @@
     <!-- Stylesheets
     ============================================= -->
     <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700|Roboto:300,400,700" rel="stylesheet" type="text/css"/>
-    <link href='http://fonts.googleapis.com/css?family=Shadows+Into+Light|Architects+Daughter|Kaushan+Script|Coming+Soon|Kalam|Yellowtail' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Shadows+Into+Light|Architects+Daughter|Kaushan+Script|Coming+Soon|Kalam|Yellowtail|Roboto' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lobster&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
 
     <link href="~/Content/css/bootstrap.css" rel="stylesheet" />
     <link href="~/Content/style.css" rel="stylesheet" />
@@ -225,7 +226,7 @@
                 return WILL.brush;
             }
 
-            WILL.init(1486, 1370);
+            WILL.init(1100, 950);
         });
     </script>
 
@@ -274,7 +275,7 @@
                     <div class="clear topmargin-sm"></div>
 
                     <abbr title="Phone Number">Phone:</abbr> (91) 8547 632521<br>
-                    <abbr title="Fax">Fax:</abbr> (91) 11 41370 1433<br>
+                    <abbr title="Fax">Fax:</abbr> (91) 11 4950 1433<br>
                     <abbr title="Email Address">Email:</abbr> info@canvas.com
                 </div>
 
@@ -346,22 +347,22 @@
                     <div class="col-padding">
 
                         <div class="heading-block nobottomborder bottommargin-sm">
-                            <h1 style="line-height: 1.4; font-size: 24px;">Try a Sample: </h1>
+                            <h1 style="line-height: 1.4; font-size: 24px;">Try a Sample: <a href="https://docs.google.com/presentation/d/1O9JZP59FQit69_9a0PtY3A-sdUrJoEhPWxaueh01k4I/edit#slide=id.p" target="_blank">...</a></h1>
                             <a class="button" href="#" onclick="GetPhrase('Easy');">Easy</a> | <a class="button" href="#" onclick="GetPhrase('Medium');">Medium</a> | <a class="button" href="#" onclick="GetPhrase('Hard');">Hard</a>
                         </div>
 
                         <div class="heading-block nobottomborder bottommargin-sm">
                             <h1 style="line-height: 1.4; font-size: 24px;">Pick a Style: </h1>
-                            <input type="radio" name="fontStyle" id="fontStyle1" checked="checked" data-info="Shadows Into Light"/> <label for="fontStyle1"style="font-family: 'Shadows Into Light'">Sample Handwriting Style</label><br/>
+                            <br/>
+                            <input type="radio" name="fontStyle" id="fontStyle1" checked="checked" data-info="Shadows Into Light" data-language="en_US"/> <label for="fontStyle1"style="font-family: 'Shadows Into Light'">Sample Handwriting Style</label><br/>
 
-                            <input type="radio" name="fontStyle" id="fontStyle2" data-info="Architects Daughter"/> <label for="fontStyle2" style="font-family: 'Architects Daughter'">Sample Handwriting Style</label><br/>
+                            <input type="radio" name="fontStyle" id="fontStyle2" data-info="Yellowtail" data-language="en_US" /> <label for="fontStyle2" style="font-family: 'Yellowtail'">Sample Handwriting Style</label><br />
 
-                            <input type="radio" name="fontStyle" id="fontStyle3" data-info="Kaushan Script"/> <label for="fontStyle3" style="font-family: 'Kaushan Script'">Sample Handwriting Style</label><br/>
+                            <input type="radio" name="fontStyle" id="fontStyle3" data-info="Lobster" data-language="bg_BG" /> <label for="fontStyle3" style="font-family: 'Lobster'">Примерен ръкописен стил</label><br />
 
-                            <input type="radio" name="fontStyle" id="fontStyle4" data-info="Coming Soon"/> <label for="fontStyle4"style="font-family: 'Coming Soon'">Sample Handwriting Style</label><br/>
+                            <input type="radio" name="fontStyle" id="fontStyle4" data-info="Roboto" data-language="zh_HK"/> <label for="fontStyle4" style="font-family: 'Roboto'">样品笔法</label><br/>
 
-                            <input type="radio" name="fontStyle" id="fontStyle5" data-info="Kalam"/> <label for="fontStyle5"style="font-family: 'Kalam'">Sample Handwriting Style</label><br/>
-                            <input type="radio" name="fontStyle" id="fontStyle6" data-info="Yellowtail" /> <label for="fontStyle6" style="font-family: 'Yellowtail'">Sample Handwriting Style</label><br />
+                            <input type="radio" name="fontStyle" id="fontStyle5" data-info="Roboto" data-language="hi_IN" /> <label for="fontStyle5" style="font-family: 'Roboto'">नमूना लिखावट शैली</label><br />
                         </div>
 
                         <div class="widget-subscribe-form-result"></div>
@@ -375,17 +376,17 @@
 
                 <div class="result" style="display: none">
                     <label>Quality Score</label>
-                    <label id="score" style="font-size:300px"></label><br/>
+                    <label id="score" style="font-size:200px"></label><br/>
                 </div>
 
             </div>
 
-            <div class="col-md-7 col-sm-6 full-screen center nopadding" style="background: url('images/page/main.jpg') center center no-repeat; background-size: cover;">
+            <div class="col-md-7 col-sm-6 full-screen center nopadding" style="background: url('images/page/main.jpg') center center no-repeat; background-size: cover;    border: 1px solid black;">
 
                 <div style="position: relative;">
-                    <canvas id="hintLayer" width="1486" height="1370"
+                    <canvas id="hintLayer" width="1100" height="950"
                             style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
-                    <canvas id="canvas" width="1486" height="1370"
+                    <canvas id="canvas" width="1100" height="950"
                             style="position: absolute; opacity: 0.7; left: 0; top: 0; z-index: 1;"></canvas>
                 </div>
 
@@ -495,6 +496,15 @@
 <script src="~/Content/js/functions.js"></script>
 
 <script>
+
+    var xOffset = 50;
+    var yOffset = 75;
+    var canvasMaxWidth = 1000;
+
+    var lineHeightEasy = 55;
+    var lineHeightMedium = 45;
+    var lineHeightHard = 35;
+
     function writeTextToCanvas(context, text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
         var line = '';
@@ -504,14 +514,14 @@
             var metrics = context.measureText(testLine);
             var testWidth = metrics.width;
             if (testWidth > maxWidth && n > 0) {
-                context.fillText(line, x + 10, y + 40);
+                context.fillText(line, x + window.xOffset, y + window.yOffset);
                 line = words[n] + ' ';
                 y += lineHeight;
             } else {
                 line = testLine;
             }
         }
-        context.fillText(line, x + 10, y + 40);
+        context.fillText(line, x + window.xOffset, y + window.yOffset);
     }
 
     function convertWillStrokesToMyScriptStrokes(willStrokes) {
@@ -538,7 +548,7 @@
     }
 
     function GetPhrase(difficulty) {
-        $.ajax("/Home/GetPhrase?difficulty=" + difficulty, {
+        $.ajax("/Home/GetPhrase?difficulty=" + difficulty + "&language=" + $("input[name='fontStyle']:checked").data("language"), {
             contentType: "application/json; charset=utf-8",
             success: function(r) {
                 var canvas = document.getElementById("hintLayer");
@@ -547,8 +557,22 @@
                 context.clearCanvas();
                 clearStrokes();
 
-                var maxWidth = 1486 - 25;
-                var lineHeight = 85;
+                var maxWidth = window.canvasMaxWidth;
+                var lineHeight = window.lineHeightEasy;
+
+                if (difficulty == "Easy") {
+                    lineHeight = window.lineHeightEasy * 1.1;
+                    context.font = window.lineHeightEasy + "pt '" + $("input[name='fontStyle']:checked").data("info") + "'";
+                }
+                else if (difficulty == "Medium") {
+                    lineHeight = window.lineHeightMedium * 1.3;
+                    context.font = window.lineHeightMedium + "pt '" + $("input[name='fontStyle']:checked").data("info") + "'";
+                } else
+                {
+                    lineHeight = window.lineHeightHard * 1.4;
+                    context.font = window.lineHeightHard + "pt '" + $("input[name='fontStyle']:checked").data("info") + "'";
+                }
+
                 var x = (canvas.width - maxWidth) / 2;
                 var y = 60;
                 var text = JSON.parse(r).Text;
@@ -557,7 +581,7 @@
 
                 window.currentPhrase = JSON.parse(r);
 
-                context.font = "65pt '" + $("input[name='fontStyle']:checked").data("info") + "'";
+                
                 context.fillStyle = '#000';
 
                 window.writeTextToCanvas(context, text, x, y, maxWidth, lineHeight);
@@ -566,7 +590,7 @@
     }
 
     function verifyResult() {
-        $.post("/home/HandwritingResult", { jsonData: JSON.stringify(convertWillStrokesToMyScriptStrokes(WILL.strokes)) },
+        $.post("/home/HandwritingResult", { jsonData: JSON.stringify(convertWillStrokesToMyScriptStrokes(WILL.strokes)), language: $("input[name='fontStyle']:checked").data("language") },
             function(r) {
                 var data = JSON.parse(r);
                 var matchedData = data.result.textSegmentResult.candidates[0];
