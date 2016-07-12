@@ -108,21 +108,21 @@ He said “You’re not pretty, you’re beautiful. I don’t like you, I love y
         {
             var wc = new System.Net.WebClient();
             wc.Headers["Accept"] = "application/json";
-            wc.Headers["Accept-Encoding"] = "gzip, deflate";
-            wc.Headers["Accept-Language"] = "en-US,bg_BG,zh_HK,en;q=0.8";
-            //wc.Headers["Connection"] = "keep-alive";
+            //wc.Headers["Accept-Encoding"] = "gzip, deflate";
+            //wc.Headers["Accept-Language"] = "en-US,bg_BG,zh_HK,en;q=0.8";
+            ////wc.Headers["Connection"] = "keep-alive";
             wc.Headers["Content-type"] = "application/x-www-form-urlencoded";
-            wc.Headers["Host"] = "webdemo.myscript.com";
-            wc.Headers["Origin"] = "http://webdemo.myscript.com";
-            wc.Headers["Referer"] = "http://webdemo.myscript.com/";
-            wc.Headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36";
+            //wc.Headers["Host"] = "cloud.myscript.com";
+            //wc.Headers["Origin"] = "http://cloud.myscript.com";
+            //wc.Headers["Referer"] = "http://cloud.myscript.com/";
+            //wc.Headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36";
             wc.Encoding = Encoding.UTF8;
-            var inputData = "apiKey=f3469740-d247-11e1-acbf-0025648c5362&instanceId=d08ced1c-2e27-4e26-a6f0-c95d38432db3&hwrInput=%7B+++++%22hwrParameter%22%3A+%7B+++++++++%22hwrInputMode%22%3A+%22CURSIVE%22%2C+++++++++%22resultDetail%22%3A+%22TEXT%22%2C+++++++++%22hwrProperties%22%3A+%7B%7D%2C+++++++++%22language%22%3A+%22LANGUAGETAG%22%2C+++++++++%22contentTypes%22%3A+%5B%5D+++++%7D%2C+++++%22inputUnits%22%3A+%5B+++++++++%7B+++++++++++++%22hwrInputType%22%3A+%22MULTI_LINE_TEXT%22%2C+++++++++++++%22components%22%3A++++++++SUPERAREA++++++++++++++++++++++%+++++++++%7D+++++%5D%2C+++++%22switchToChildren%22%3A+true+%7D"
+            var inputData = "applicationKey=749e6a68-f4bf-4ede-820e-d94f5b7622f7&textInput=%7B%0A%20%20%20%20%22textParameter%22%3A%20%7B%0A%20%20%20%20%20%20%20%20%22language%22%3A%20%22LANGUAGETAG%22%2C%0A%20%20%20%20%20%20%20%20%22textInputMode%22%3A%20%22CURSIVE%22%0A%20%20%20%20%7D%2C%0A%20%20%20%20%22inputUnits%22%3A%20%5B%0A%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%22textInputType%22%3A%20%22MULTI_LINE_TEXT%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%22components%22%3A%20SUPERAREA%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%5D%0A%7D"
                 .Replace("LANGUAGETAG", language).Replace("SUPERAREA", HttpUtility.UrlEncode(jsonData));
 
 
             var result =
-                wc.UploadString("http://webdemo.myscript.com/api/myscript/v2.0/hwr/doSimpleRecognition.json", "POST",
+                wc.UploadString("http://cloud.myscript.com/api/v3.0/recognition/rest/text/doSimpleRecognition.json", "POST",
                     inputData);
             return Content(result);
         }
